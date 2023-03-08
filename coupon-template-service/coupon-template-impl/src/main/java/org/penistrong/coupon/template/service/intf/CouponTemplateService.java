@@ -1,4 +1,4 @@
-package org.penistrong.coupon.template.impl.service.intf;
+package org.penistrong.coupon.template.service.intf;
 
 import org.penistrong.coupon.template.api.beans.CouponTemplateInfo;
 import org.penistrong.coupon.template.api.beans.PagedCouponTemplateInfo;

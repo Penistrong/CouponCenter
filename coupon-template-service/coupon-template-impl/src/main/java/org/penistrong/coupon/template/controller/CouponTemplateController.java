@@ -1,11 +1,11 @@
-package org.penistrong.coupon.template.impl.controller;
+package org.penistrong.coupon.template.controller;
 
 import com.alibaba.fastjson.JSON;
 import lombok.extern.slf4j.Slf4j;
 import org.penistrong.coupon.template.api.beans.CouponTemplateInfo;
 import org.penistrong.coupon.template.api.beans.PagedCouponTemplateInfo;
 import org.penistrong.coupon.template.api.beans.TemplateSearchParams;
-import org.penistrong.coupon.template.impl.service.intf.CouponTemplateService;
+import org.penistrong.coupon.template.service.intf.CouponTemplateService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 

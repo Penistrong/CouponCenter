@@ -1,4 +1,4 @@
-package org.penistrong.coupon.template.impl.service;
+package org.penistrong.coupon.template.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.penistrong.coupon.template.api.beans.CouponTemplateInfo;
@@ -7,8 +7,8 @@ import org.penistrong.coupon.template.api.beans.TemplateSearchParams;
 import org.penistrong.coupon.template.api.enums.CouponType;
 import org.penistrong.coupon.template.dao.CouponTemplateDao;
 import org.penistrong.coupon.template.dao.entity.CouponTemplate;
-import org.penistrong.coupon.template.impl.converter.CouponTemplateConverter;
-import org.penistrong.coupon.template.impl.service.intf.CouponTemplateService;
+import org.penistrong.coupon.template.converter.CouponTemplateConverter;
+import org.penistrong.coupon.template.service.intf.CouponTemplateService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;

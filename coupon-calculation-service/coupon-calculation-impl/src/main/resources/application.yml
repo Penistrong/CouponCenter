@@ -1,0 +1,19 @@
+server:
+  port: 12581
+  error:
+    include-message: always
+
+spring:
+  application:
+    name: coupon-calculation-service
+
+logging:
+  level:
+    com.broadview.coupon: debug
+
+# 开启所有Management端点
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"

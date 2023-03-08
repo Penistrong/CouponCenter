@@ -1,4 +1,4 @@
-package org.penistrong.coupon.template.impl.converter;
+package org.penistrong.coupon.template.converter;
 
 import org.penistrong.coupon.template.api.beans.CouponTemplateInfo;
 
