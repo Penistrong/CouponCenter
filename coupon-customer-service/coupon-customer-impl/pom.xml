@@ -19,7 +19,7 @@
         </dependency>
 
         <!-- 现在添加的还是Implementation依赖，三合一单体应用，在微服务架构里会被拆分为3个独立的应用 -->
-        <dependency>
+        <!--<dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>coupon-calculation-impl</artifactId>
             <version>${project.version}</version>
@@ -29,11 +29,47 @@
             <groupId>${project.groupId}</groupId>
             <artifactId>coupon-template-impl</artifactId>
             <version>${project.version}</version>
+        </dependency>-->
+
+        <!-- 微服务架构，只依赖其他服务提供的API，包括公共类和POJO等 -->
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>coupon-template-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>coupon-calculation-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
+        <!-- Nacos服务发现 -->
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
+        </dependency>
+
+        <!-- Spring Cloud御用负载均衡组件Loadbalancer -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-loadbalancer</artifactId>
+        </dependency>
+
+        <!-- 响应式编程的Webflux组件，提供了异步化的非阻塞功能 -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webflux</artifactId>
         </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
     </dependencies>
 

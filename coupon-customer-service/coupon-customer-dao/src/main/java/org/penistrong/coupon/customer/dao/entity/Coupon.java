@@ -10,7 +10,7 @@ import org.penistrong.coupon.template.api.beans.CouponTemplateInfo;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.Date;
 
 @Builder

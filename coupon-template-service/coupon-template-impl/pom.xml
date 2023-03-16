@@ -25,6 +25,12 @@
             <version>${project.version}</version>
         </dependency>
 
+        <!-- Nacos服务发现，否则无法使用服务发现 -->
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>com.alibaba</groupId>
             <artifactId>fastjson</artifactId>

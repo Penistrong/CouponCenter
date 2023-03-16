@@ -1,11 +1,11 @@
 package org.penistrong.coupon.customer.service;
 
+import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.BooleanUtils;
 import org.penistrong.coupon.calculation.api.beans.ShoppingCart;
 import org.penistrong.coupon.calculation.api.beans.SimulationOrder;
 import org.penistrong.coupon.calculation.api.beans.SimulationResponse;
-import org.penistrong.coupon.calculation.service.intf.CouponCalculationService;
 import org.penistrong.coupon.customer.api.beans.RequestCoupon;
 import org.penistrong.coupon.customer.api.beans.CouponSearchParams;
 import org.penistrong.coupon.customer.api.enums.CouponStatus;
@@ -15,17 +15,23 @@ import org.penistrong.coupon.customer.service.intf.CouponCustomerService;
 import org.penistrong.coupon.template.api.beans.CouponInfo;
 import org.penistrong.coupon.template.api.beans.CouponTemplateInfo;
 import org.penistrong.coupon.template.api.beans.PagedCouponInfo;
-import org.penistrong.coupon.template.service.intf.CouponTemplateService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.util.CollectionUtils;
+import org.springframework.web.reactive.function.client.WebClient;
 
 import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+
+import static org.penistrong.coupon.customer.constant.Constant.TRAFFIC_VERSION;
 
 @Slf4j
 @Service
@@ -34,16 +40,25 @@ public class CouponCustomerServiceImpl implements CouponCustomerService {
     @Autowired
     private CouponDao couponDao;
 
-    // 将template模块和calculation模块的service类注入过来以方便使用
     @Autowired
-    private CouponTemplateService templateService;
-
-    @Autowired
-    private CouponCalculationService calculationService;
+    private WebClient.Builder webClientBuilder;
 
     @Override
     public Coupon requestCoupon(RequestCoupon request) {
-        CouponTemplateInfo templateInfo = templateService.loadTemplateInfo(request.getCouponTemplateId());
+        /* get: 指明Http Method为GET
+         * uri: 指明远程调用的请求地址，Nacos会使用服务发现机制根据目标服务名称解析为可用服务节点
+         * retrieve: 直接获取responseBody并准备decode
+         * bodyToMono: 将responseBody解析并转换为具体的Java对象
+         * block: 将类型为T的对象从Mono<T>中取出
+         */
+        CouponTemplateInfo templateInfo = webClientBuilder.build()
+                .get()
+                .uri("http://coupon-template-service/template/getTemplate?id="+request.getCouponTemplateId())
+                // LoadBalancer - 测试流量打标，将trafficVersion传入WebClient的Header中
+                .header(TRAFFIC_VERSION, request.getTrafficVersion())
+                .retrieve()
+                .bodyToMono(CouponTemplateInfo.class)
+                .block();
 
         // 若不存在模板则抛出异常
         if (templateInfo == null){
@@ -72,6 +87,7 @@ public class CouponCustomerServiceImpl implements CouponCustomerService {
                 .userId(request.getUserId())
                 .shopId(templateInfo.getShopId())
                 .status(CouponStatus.AVAILABLE)
+                .templateInfo(templateInfo)
                 .build();
         couponDao.save(coupon);
 
@@ -80,12 +96,96 @@ public class CouponCustomerServiceImpl implements CouponCustomerService {
 
     @Override
     public ShoppingCart placeOrder(ShoppingCart cart) {
-        return null;
+        if (CollectionUtils.isEmpty(cart.getProducts())) {
+            log.error("Invalid check out request with empty cart, cart={}", cart);
+            throw new IllegalArgumentException("Cart is empty");
+        }
+
+        Coupon coupon = null;
+        if (cart.getCouponId() != null) {
+            // 结算时使用里优惠券，验证其是否可用
+            Coupon example = Coupon.builder()
+                    .userId(cart.getUserId())
+                    .id(cart.getCouponId())
+                    .status(CouponStatus.AVAILABLE)
+                    .build();
+
+            coupon = couponDao.findAll(Example.of(example))
+                    .stream()
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("Coupon not found"));
+
+            CouponInfo couponInfo = CouponConverter.convertToCouponInfo(coupon);
+            couponInfo.setTemplate(loadTemplateInfo(couponInfo.getTemplateId()));
+
+            cart.setCouponInfos(Lists.newArrayList(couponInfo));
+        }
+        // 结算购物车
+        ShoppingCart checkoutInfo = webClientBuilder.build()
+                .post()
+                .uri("http://coupon-calculation-service/calculator/checkout")
+                .bodyValue(cart)
+                .retrieve()
+                .bodyToMono(ShoppingCart.class)
+                .block();
+
+        if (coupon == null) {
+            // 如果优惠券没有被结算，而用户使用里优惠券，则报错提示满足不了优惠券的使用条件
+            if (CollectionUtils.isEmpty(checkoutInfo.getCouponInfos())) {
+                log.error("Cannot apply coupon to cart, couponId={}", coupon.getId());
+                throw new IllegalArgumentException("Coupon is not applicable on this cart");
+            }
+
+            log.info("Update coupon status to used, couponId={}", coupon.getId());
+            coupon.setStatus(CouponStatus.USED);
+            couponDao.save(coupon);
+        }
+
+        return checkoutInfo;
     }
 
     @Override
     public SimulationResponse simulateOrderPrice(SimulationOrder order) {
-        return null;
+        List<CouponInfo> couponInfos = Lists.newArrayList();
+        // 循环加载优惠券信息，然而最好采用批量查询，以免高并发导致问题
+        // 由于券模板一旦创建后不会对其执行修改，创建完毕后可以将数据异构放入缓存，从缓存中直接取用
+        for (Long couponId : order.getCouponIDs()) {
+            Coupon example = Coupon.builder()
+                    .userId(order.getUserId())
+                    .id(couponId)
+                    .status(CouponStatus.AVAILABLE)
+                    .build();
+            Optional<Coupon> couponOptional = couponDao.findAll(Example.of(example))
+                    .stream()
+                    .findFirst();
+            // 加载模板信息
+            if (couponOptional.isPresent()) {
+                Coupon coupon = couponOptional.get();
+                CouponInfo couponInfo = CouponConverter.convertToCouponInfo(coupon);
+
+                couponInfo.setTemplate(loadTemplateInfo(coupon.getTemplateId()));
+                couponInfos.add(couponInfo);
+            }
+        }
+        order.setCouponInfos(couponInfos);
+
+        return webClientBuilder.build()
+                .post()
+                .uri("http://coupon-calculation-service/calculator/simulate")
+                .bodyValue(order)
+                .retrieve()
+                .bodyToMono(SimulationResponse.class)
+                .block();
+    }
+
+    // 根据给定模板id调用template-service获得其具体模板信息
+    private CouponTemplateInfo loadTemplateInfo(Long templateId) {
+        return webClientBuilder.build()
+                .get()
+                .uri("http://coupon-template-service/template/getTemplate?id=" + templateId)
+                .retrieve()
+                .bodyToMono(CouponTemplateInfo.class)
+                .block();
     }
 
     @Override
@@ -125,16 +225,26 @@ public class CouponCustomerServiceImpl implements CouponCustomerService {
 
         // Coupon::templateinfo是@Transient的，没有持久化到表中
         // 还需调用templateService去查找
-        List<Long> templateIds = coupons.stream()
+        // 从List<Long>改成以","分割的长String是为了给下面的get请求传值
+        String templateIds = coupons.stream()
                 .map(Coupon::getTemplateId)
-                .toList();
+                .map(String::valueOf)
+                .distinct()
+                .collect(Collectors.joining(","));
 
-        Map<Long, CouponTemplateInfo> templateInfoMap= templateService.getTemplateInfoMap(templateIds);
+        // 构造ParameterizedTypeReference实例让WebClient将ResponseBody转换为对应类型
+        Map<Long, CouponTemplateInfo> templateInfoMap = webClientBuilder.build()
+                .get()
+                .uri("http://coupon-template-service/template/getBatchTemplates?ids="+templateIds)
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<Map<Long, CouponTemplateInfo>>(){})
+                .block();
+
 
         coupons.forEach(c -> c.setTemplateInfo(templateInfoMap.get(c.getTemplateId())));
 
         List<CouponInfo> couponInfos = coupons.stream()
-                .map(CouponConverter::convertToCoupon)
+                .map(CouponConverter::convertToCouponInfo)
                 .toList();
 
         PagedCouponInfo response = PagedCouponInfo.builder()

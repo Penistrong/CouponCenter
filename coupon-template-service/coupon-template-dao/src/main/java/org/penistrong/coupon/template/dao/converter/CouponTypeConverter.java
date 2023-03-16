@@ -2,8 +2,8 @@ package org.penistrong.coupon.template.dao.converter;
 
 import org.penistrong.coupon.template.api.enums.CouponType;
 
-import javax.persistence.AttributeConverter;
-import javax.persistence.Converter;
+import jakarta.persistence.AttributeConverter;
+import jakarta.persistence.Converter;
 
 @Converter
 public class CouponTypeConverter implements AttributeConverter<CouponType, String> {

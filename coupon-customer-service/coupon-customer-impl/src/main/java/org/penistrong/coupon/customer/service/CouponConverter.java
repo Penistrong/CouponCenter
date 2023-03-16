@@ -4,7 +4,7 @@ import org.penistrong.coupon.customer.dao.entity.Coupon;
 import org.penistrong.coupon.template.api.beans.CouponInfo;
 
 public class CouponConverter {
-    public static CouponInfo convertToCoupon(Coupon coupon) {
+    public static CouponInfo convertToCouponInfo(Coupon coupon) {
         return CouponInfo.builder()
                 .id(coupon.getId())
                 .templateId(coupon.getTemplateId())

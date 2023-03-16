@@ -1,5 +1,5 @@
 server:
-  port: 12580
+  port: 12590
   error:
     include-message: always
 
@@ -31,6 +31,34 @@ spring:
         format_sql: true
         show_sql: true
     open-in-view: false
+  # Spring-Cloud配置
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+        service: coupon-template-service
+        # Nacos客户端向服务端发送心跳的间隔，单位ms
+        heart-beat-interval: 5000
+        # Nacos服务端将未接收到心跳的客户端设置为 不健康 状态的时间间隔，单位ms
+        heart-beat-timeout: 15000
+        # 元数据部分，而可以添加自定义属性
+        metadata:
+          penistrong-custom-metadata: I-Penistrong
+        # 客户端在启动是否读取本地配置项以获取服务列表，若为true会在本地维护一个配置项文件下次宕机重启动后会读取文件里的服务列表
+        naming-load-cache-at-start: false
+        # 集群名
+        cluster-name: Cluster-Coupon
+        # 命名空间ID, Nacos通过不同命名空间区分不同数据环境，进行数据隔离，服务消费时只能消费到其对应命名空间下的服务
+        # 在Nacos-server中创建namespace后，将namespace的**ID**设置为该属性值
+        namespace: coupon-center-dev
+        # 服务集群，如果两个服务存在上下游调用关系，它们必须在同一group下才能发起请求
+        group: main
+        # 向Nacos注册中心注册服务，如果只消费其他服务而不提供服务，可以设置为false以减小开销
+        register-enabled: true
+        # 开启监听服务端信息变化
+        watch:
+          enabled: true
+        watch-delay: 30000
 
 logging:
   level:

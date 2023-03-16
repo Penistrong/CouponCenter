@@ -1,5 +1,8 @@
 package org.penistrong.coupon.template.dao.entity;
 
+// Spring 3.0 Change the JavaEE API to Jakarta EE API
+// from javax.persistence.* (Spring 2.4+) to jakarta.persistence.* (Spring 3.0)
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -11,7 +14,6 @@ import org.penistrong.coupon.template.dao.converter.RuleConverter;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Date;
 
@@ -21,8 +23,8 @@ import java.util.Date;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Entity
 @Builder
+@Entity
 @EntityListeners(AuditingEntityListener.class)
 @Table(name = "coupon_template")
 public class CouponTemplate implements Serializable {

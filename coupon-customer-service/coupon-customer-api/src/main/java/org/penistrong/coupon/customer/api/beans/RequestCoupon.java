@@ -18,4 +18,7 @@ public class RequestCoupon {
     // 优惠券对应的模板ID
     @NotNull
     private Long couponTemplateId;
+
+    // LoadBalancer - 测试流量打标字段，将trafficVersion添加到WebClient的Header中
+    private String trafficVersion;
 }

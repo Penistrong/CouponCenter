@@ -29,8 +29,10 @@ public interface CouponTemplateDao extends JpaRepository<CouponTemplate, Long> {
 
     // 对于复杂查询，使用接口名会导致名称过长且难以维护
     // 解决方法: 1.自定义SQL 2.构造Example对象进行查找
+    // JPA 3.0 更新 c.available在表中为boolean字段，在2.4.4版本可以指定c.available=0
+    // 但是3.0后类型判定比较严格，不使用nativeSQL的情况下要给定相同类型的变量
     @Modifying
-    @Query("UPDATE CouponTemplate c SET c.available = 0 WHERE c.id = :id")
+    @Query("UPDATE CouponTemplate c SET c.available = false WHERE c.id = :id")
     int makeCouponUnavailable(@Param("id") Long id);
 
 }
