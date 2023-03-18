@@ -6,14 +6,12 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.cloud.client.discovery.EnableDiscoveryClient;
 import org.springframework.cloud.loadbalancer.annotation.LoadBalancerClient;
+import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
-/**
- * 三合一启动，改造成微服务架构时要更改，变成完全独立的3个服务
- */
 @SpringBootApplication
 @EnableJpaAuditing
 @EnableTransactionManagement
@@ -24,6 +22,8 @@ import org.springframework.transaction.annotation.EnableTransactionManagement;
 @EntityScan(basePackages = {"org.penistrong"})
 @EnableDiscoveryClient
 @LoadBalancerClient(value = "coupon-template-service", configuration = CanaryRuleConfiguration.class)
+// 开启OpenFeign，开启后才会根据动态代理机制创建对应的远程调用服务实现，才能加入到Spring Context中再被注入到ServiceImpl里
+@EnableFeignClients(basePackages = {"org.penistrong"})
 public class CouponCustomerApplication {
 
     public static void main(String[] args) {

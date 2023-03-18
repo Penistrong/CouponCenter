@@ -6,20 +6,21 @@ server:
 spring:
   application:
     name: coupon-customer-service
-  datasource:
-    username: penistrong
-    password: chenliwei
-    url: jdbc:mysql://127.0.0.1:3306/coupon_db?autoReconnect=true&useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true&zeroDateTimeBehavior=convertToNull&serverTimezone=UTC
-    type: com.zaxxer.hikari.HikariDataSource
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    hikari:
-      pool-name: CouponHikari
-      connection-timeout: 5000
-      idle-timeout: 30000
-      maximum-pool-size: 10
-      minimum-idle: 5
-      max-lifetime: 60000
-      auto-commit: true
+#  # 已改为从Nacos配置中心获取
+#  datasource:
+#    username: penistrong
+#    password: chenliwei
+#    url: jdbc:mysql://127.0.0.1:3306/coupon_db?autoReconnect=true&useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true&zeroDateTimeBehavior=convertToNull&serverTimezone=UTC
+#    type: com.zaxxer.hikari.HikariDataSource
+#    driver-class-name: com.mysql.cj.jdbc.Driver
+#    hikari:
+#      pool-name: CouponHikari
+#      connection-timeout: 5000
+#      idle-timeout: 30000
+#      maximum-pool-size: 10
+#      minimum-idle: 5
+#      max-lifetime: 60000
+#      auto-commit: true
   jpa:
     show-sql: true
     hibernate:
@@ -61,3 +62,18 @@ spring:
 logging:
   level:
     com.broadview.coupon: debug
+    # 配置OpenFeign日志信息打印
+    org.penistrong.coupon.customer.feign.TemplateService: debug
+    org.penistrong.coupon.customer.feign.CalculationService: debug
+
+feign:
+  client:
+    config:
+      # 全局默认超时判定配置
+      default:
+        connectTimeout: 1000
+        readTimeout: 5000
+      # 针对特定服务配置
+      coupon-template-service:
+        connectTimeout: 1000
+        readTimeout: 2000

@@ -11,12 +11,13 @@ import org.penistrong.coupon.customer.api.beans.CouponSearchParams;
 import org.penistrong.coupon.customer.api.enums.CouponStatus;
 import org.penistrong.coupon.customer.dao.CouponDao;
 import org.penistrong.coupon.customer.dao.entity.Coupon;
+import org.penistrong.coupon.customer.feign.CalculationService;
+import org.penistrong.coupon.customer.feign.TemplateService;
 import org.penistrong.coupon.customer.service.intf.CouponCustomerService;
 import org.penistrong.coupon.template.api.beans.CouponInfo;
 import org.penistrong.coupon.template.api.beans.CouponTemplateInfo;
 import org.penistrong.coupon.template.api.beans.PagedCouponInfo;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -29,7 +30,6 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static org.penistrong.coupon.customer.constant.Constant.TRAFFIC_VERSION;
 
@@ -42,6 +42,13 @@ public class CouponCustomerServiceImpl implements CouponCustomerService {
 
     @Autowired
     private WebClient.Builder webClientBuilder;
+
+    // 注入OpenFeign托管的远程服务调用接口
+    @Autowired
+    private TemplateService templateService;
+
+    @Autowired
+    private CalculationService calculationService;
 
     @Override
     public Coupon requestCoupon(RequestCoupon request) {
@@ -121,6 +128,7 @@ public class CouponCustomerServiceImpl implements CouponCustomerService {
             cart.setCouponInfos(Lists.newArrayList(couponInfo));
         }
         // 结算购物车
+        /* 改造为OpenFeign接口调用
         ShoppingCart checkoutInfo = webClientBuilder.build()
                 .post()
                 .uri("http://coupon-calculation-service/calculator/checkout")
@@ -128,6 +136,9 @@ public class CouponCustomerServiceImpl implements CouponCustomerService {
                 .retrieve()
                 .bodyToMono(ShoppingCart.class)
                 .block();
+         */
+
+        ShoppingCart checkoutInfo = calculationService.checkout(cart);
 
         if (coupon == null) {
             // 如果优惠券没有被结算，而用户使用里优惠券，则报错提示满足不了优惠券的使用条件
@@ -169,6 +180,7 @@ public class CouponCustomerServiceImpl implements CouponCustomerService {
         }
         order.setCouponInfos(couponInfos);
 
+        /* 改造为OpenFeign接口调用
         return webClientBuilder.build()
                 .post()
                 .uri("http://coupon-calculation-service/calculator/simulate")
@@ -176,16 +188,22 @@ public class CouponCustomerServiceImpl implements CouponCustomerService {
                 .retrieve()
                 .bodyToMono(SimulationResponse.class)
                 .block();
+         */
+        return calculationService.simulate(order);
     }
 
     // 根据给定模板id调用template-service获得其具体模板信息
     private CouponTemplateInfo loadTemplateInfo(Long templateId) {
+        /*
         return webClientBuilder.build()
                 .get()
                 .uri("http://coupon-template-service/template/getTemplate?id=" + templateId)
                 .retrieve()
                 .bodyToMono(CouponTemplateInfo.class)
                 .block();
+         */
+        // 改造为OpenFeign调用远程服务，而不是直接用WebClient调用
+        return templateService.getTemplate(templateId);
     }
 
     @Override
@@ -223,6 +241,8 @@ public class CouponCustomerServiceImpl implements CouponCustomerService {
         // DAO去数据库表"coupon"中执行批量查询
         Page<Coupon> coupons = couponDao.findAll(Example.of(example), page);
 
+        /* 改造为OpenFeign接口调用
+
         // Coupon::templateinfo是@Transient的，没有持久化到表中
         // 还需调用templateService去查找
         // 从List<Long>改成以","分割的长String是为了给下面的get请求传值
@@ -240,6 +260,14 @@ public class CouponCustomerServiceImpl implements CouponCustomerService {
                 .bodyToMono(new ParameterizedTypeReference<Map<Long, CouponTemplateInfo>>(){})
                 .block();
 
+        */
+        List<Long> templateIds = coupons.stream()
+                .map(Coupon::getTemplateId)
+                .distinct()
+                .toList();
+
+        Map<Long, CouponTemplateInfo> templateInfoMap = templateService
+                .getBatchTemplate(templateIds);
 
         coupons.forEach(c -> c.setTemplateInfo(templateInfoMap.get(c.getTemplateId())));
 

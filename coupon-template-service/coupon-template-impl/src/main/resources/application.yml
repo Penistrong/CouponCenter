@@ -1,5 +1,5 @@
 server:
-  port: 12590
+  port: 12580
   error:
     include-message: always
 

@@ -44,16 +44,49 @@
             <version>${project.version}</version>
         </dependency>
 
-        <!-- Nacos服务发现 -->
+        <!-- Spring Cloud御用负载均衡组件Loadbalancer -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-loadbalancer</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-openfeign</artifactId>
+        </dependency>
+
+        <!-- OpenFeign的服务降级支持借助于Hystrix实现，而后者已被Spring Cloud从组件库移除，需要手动添加依赖 -->
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-netflix-hystrix</artifactId>
+            <version>2.2.10.RELEASE</version>
+            <exclusions>
+                <!-- 移除ribbon负载均衡器，防止冲突 -->
+                <exclusion>
+                    <groupId>org.springframework.cloud</groupId>
+                    <artifactId>spring-cloud-netflix-ribbon</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <!-- Nacos Service Discovery Support -->
         <dependency>
             <groupId>com.alibaba.cloud</groupId>
             <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
         </dependency>
 
-        <!-- Spring Cloud御用负载均衡组件Loadbalancer -->
+        <!-- Nacos Configuration Center Support -->
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>
+        </dependency>
+
+        <!-- 使模块启动时能够加载本地bootstrap配置文件(application.yml要去Nacos配置中心获取)
+             诸如数据库连接池等重要组件会先于其他组件初始化，为了保证正常启动，需要在其他组件初始化前从Nacos读取配置项
+             将Nacos Config连接串配置在bootstrap中就能获取 -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
-            <artifactId>spring-cloud-starter-loadbalancer</artifactId>
+            <artifactId>spring-cloud-starter-bootstrap</artifactId>
         </dependency>
 
         <!-- 响应式编程的Webflux组件，提供了异步化的非阻塞功能 -->

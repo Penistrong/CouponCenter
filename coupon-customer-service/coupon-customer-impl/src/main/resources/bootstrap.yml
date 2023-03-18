@@ -1,0 +1,33 @@
+# 将application.yml中的spring.application.name属性迁移到bootstrap中
+# Nacos才能识别服务名
+spring:
+  application:
+    name: coupon-customer-service
+  cloud:
+    nacos:
+      config:
+        # nacos config server address
+        server-addr: localhost:8848
+        # 配置文件扩展名 默认是.properties
+        file-extension: yml
+        namespace: coupon-center-dev
+        group: main
+        # 配置项读取超时时间
+        timeout: 5000
+        # 长轮询超时时间
+        config-long-poll-timeout: 10000
+        # 轮询重试时间
+        config-retry-time: 2000
+        # 长轮询重试次数上限
+        max-retry: 3
+        # 开启监听和自动刷新
+        refresh-enabled: true
+        # nacos扩展配置项，数字越大优先级越高
+        # 可以使多个微服务读取公共配置项(比如共享Redis和RabbitMQ等中间件的连接信息)
+        extension-configs:
+          - data-id: redis-config.yml
+            group: COMMON_CONFIG
+            refresh: true
+          - data-id: rabbitmq-config.yml
+            group: COMMON_CONFIG
+            refresh: true

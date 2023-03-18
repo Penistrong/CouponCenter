@@ -1,5 +1,6 @@
 package org.penistrong.coupon.customer;
 
+import feign.Logger;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -18,5 +19,11 @@ public class CouponCustomerConfiguration {
     @LoadBalanced
     public WebClient.Builder register() {
         return WebClient.builder();
+    }
+
+    // 开启OpenFeign日志打印,声明Feign的日志级别(Feign自定义的级别)
+    @Bean
+    Logger.Level feignLogger() {
+        return Logger.Level.FULL;
     }
 }
