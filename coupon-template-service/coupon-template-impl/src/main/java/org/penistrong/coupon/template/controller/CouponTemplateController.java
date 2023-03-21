@@ -1,6 +1,9 @@
 package org.penistrong.coupon.template.controller;
 
+import com.alibaba.csp.sentinel.annotation.SentinelResource;
+import com.alibaba.csp.sentinel.slots.block.BlockException;
 import com.alibaba.fastjson.JSON;
+import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 import org.penistrong.coupon.template.api.beans.CouponTemplateInfo;
 import org.penistrong.coupon.template.api.beans.PagedCouponTemplateInfo;
@@ -33,16 +36,40 @@ public class CouponTemplateController {
         return couponTemplateService.cloneTemplate(id);
     }
 
+    // 添加Sentinel注解，将Controller里请求的API也当作资源
     @GetMapping("/getTemplate")
+    @SentinelResource(value = "getTemplate")
     public CouponTemplateInfo getTemplate(@RequestParam("id") Long id) {
         log.info("Query and load template info, id={}", id);
         return couponTemplateService.loadTemplateInfo(id);
     }
 
+    // 降级逻辑需要尽可能地返回一个可被调用者服务处理的默认值，类似静默逻辑
+    // 比如批量获取CouponTemplates时发生服务异常，应该返回一个空表，这样调用该接口的服务得到返回值后可以静默处理
     @GetMapping("/getBatchTemplates")
+    @SentinelResource(value = "getBatchTemplates",
+                      blockHandler = "getTemplateInBatch_block",
+                      fallback = "getTemplateInBatch_fallback")
     public Map<Long, CouponTemplateInfo> getTemplateInBatch(@RequestParam("ids") Collection<Long> ids) {
         log.info("Get Templates In Batch: {}", JSON.toJSONString(ids));
+        // 测试Sentinel熔断规则: 采取 异常比例 作为熔断策略
+        // 在10s的滑动统计窗口内，如果发生异常的请求比例超过60%(0.6)，且最小总请求数为5，则开启5s的熔断策略
+        if (ids.size() == 2)
+            throw new RuntimeException("批量查询券模板，模板id个数等于2时抛出运行时异常，测试Sentinel熔断策略");
         return couponTemplateService.getTemplateInfoMap(ids);
+    }
+
+    // Sentinel配置getBatchTemplates接口的降级策略, blockHandler只能处理Sentinel抛出BlockException的情况
+    public Map<Long, CouponTemplateInfo> getTemplateInBatch_block(Collection<Long> ids, BlockException e) {
+        log.info("API::GetTemplateInBatch was blocked by Sentinel's BlockException (暂时降级)");
+        return Maps.newHashMap();
+    }
+
+    // Sentinel配置getBatchTemplates接口的降级策略, fallback能处理其他RuntimeException
+    // fallback的方法参数不需要接收BlockException, 否则无法处理其他异常的情况
+    public Map<Long, CouponTemplateInfo> getTemplateInBatch_fallback(Collection<Long> ids) {
+        log.info("API::GetTemplateInBatch was blocked by Other RuntimeException (暂时降级)");
+        return Maps.newHashMap();
     }
 
     @PostMapping("/search")

@@ -1,5 +1,6 @@
 package org.penistrong.coupon.customer.controller;
 
+import com.alibaba.csp.sentinel.annotation.SentinelResource;
 import com.alibaba.nacos.api.config.annotation.NacosValue;
 import lombok.extern.slf4j.Slf4j;
 import org.penistrong.coupon.calculation.api.beans.ShoppingCart;
@@ -36,6 +37,7 @@ public class CouponCustomerController {
 
     // 领取优惠券
     @PostMapping("/requestCoupon")
+    @SentinelResource(value = "customer::requestCoupon")
     public Coupon requestCoupon(@Valid @RequestBody RequestCoupon request) {
         if (disableCoupon) {
             log.info("Nacos Config told us haul some time to Request Coupon");
@@ -63,6 +65,7 @@ public class CouponCustomerController {
     }
 
     @PostMapping("/searchCoupon")
+    @SentinelResource(value = "customer::searchCoupon")
     // 搜索优惠券，已封装搜索参数，并返回分页查询结果
     public PagedCouponInfo searchCoupon(@Valid @RequestBody CouponSearchParams request) {
         return customerService.searchCoupons(request);

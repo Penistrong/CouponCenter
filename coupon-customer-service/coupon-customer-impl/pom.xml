@@ -81,6 +81,17 @@
             <artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>
         </dependency>
 
+        <!-- Sentinel依赖项 -->
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-sentinel</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.alibaba.csp</groupId>
+            <artifactId>sentinel-datasource-nacos</artifactId>
+        </dependency>
+
         <!-- 使模块启动时能够加载本地bootstrap配置文件(application.yml要去Nacos配置中心获取)
              诸如数据库连接池等重要组件会先于其他组件初始化，为了保证正常启动，需要在其他组件初始化前从Nacos读取配置项
              将Nacos Config连接串配置在bootstrap中就能获取 -->

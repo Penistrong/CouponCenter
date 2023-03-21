@@ -1,0 +1,41 @@
+server:
+  port: 10000
+
+spring:
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  cloud:
+    nacos:
+      discovery:
+        server-addr: localhost:8848
+        heart-beat-interval: 5000
+        heart-beat-timeout: 15000
+        cluster-name: Cluster-Coupon
+        namespace: coupon-center-dev
+        group: main
+        register-enabled: true
+
+    gateway:
+      discovery:
+        locator:
+          # 创建默认路由，以"/服务名称/接口地址"的格式规则进行路由转发
+          enabled: true
+          lower-case-service-id: true
+      # 全局跨域规则
+      # 规避浏览器的同源保护策略
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            # 受信地址列表
+            allowed-origins:
+              - "http://localhost:30000"
+              - "https://www.penistrong.xyz"
+            # cookie, authorization, etc.
+            exposedHeaders: "*"
+            allowed-methods: "*"
+            allow-credentials: true
+            allowed-headers: "*"
+            # 浏览器缓存时间
+            max-age: 1000

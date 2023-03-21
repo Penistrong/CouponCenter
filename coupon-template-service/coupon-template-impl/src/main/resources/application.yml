@@ -1,26 +1,29 @@
-server:
-  port: 12580
-  error:
-    include-message: always
+# 使用Nacos配置中心动态推送
+#server:
+#  port: 12580
+#  error:
+#    include-message: always
 
 spring:
-  application:
-    name: coupon-template-service
-  datasource:
-    username: penistrong
-    password: chenliwei
-    url: jdbc:mysql://127.0.0.1:3306/coupon_db?autoReconnect=true&useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true&zeroDateTimeBehavior=convertToNull&serverTimezone=UTC
-    type: com.zaxxer.hikari.HikariDataSource
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    # HikariDataSource配置
-    hikari:
-      pool-name: CouponHikari
-      connection-timeout: 5000
-      idle-timeout: 30000
-      maximum-pool-size: 10
-      minimum-idle: 5
-      max-lifetime: 60000
-      auto-commit: true
+# application.name移入bootstrap.yml中
+#  application:
+#    name: coupon-template-service
+#  # 已改为从Nacos配置中心获取
+#  datasource:
+#    username: penistrong
+#    password: chenliwei
+#    url: jdbc:mysql://127.0.0.1:3306/coupon_db?autoReconnect=true&useUnicode=true&characterEncoding=utf8&useSSL=false&allowPublicKeyRetrieval=true&zeroDateTimeBehavior=convertToNull&serverTimezone=UTC
+#    type: com.zaxxer.hikari.HikariDataSource
+#    driver-class-name: com.mysql.cj.jdbc.Driver
+#    # HikariDataSource配置
+#    hikari:
+#      pool-name: CouponHikari
+#      connection-timeout: 5000
+#      idle-timeout: 30000
+#      maximum-pool-size: 10
+#      minimum-idle: 5
+#      max-lifetime: 60000
+#      auto-commit: true
   # Spring-Boot-JPA配置
   jpa:
     show-sql: true
@@ -59,6 +62,19 @@ spring:
         watch:
           enabled: true
         watch-delay: 30000
+    sentinel:
+      transport:
+        # Sentinel API端口 默认8719
+        port: 8719
+        dashboard: localhost:8080
+      datasource:
+        coupon-center-flow:
+          nacos:
+            server-addr: localhost:8848
+            namespace: coupon-center-dev
+            group-id: SENTINEL_GROUP
+            data-id: ${spring.application.name}-flow-rules
+            rule-type: flow
 
 logging:
   level:

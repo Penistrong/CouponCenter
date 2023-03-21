@@ -1,11 +1,13 @@
-server:
-  port: 12581
-  error:
-    include-message: always
+# 使用Nacos配置中心动态推送
+#server:
+#  port: 12581
+#  error:
+#    include-message: always
 
 spring:
-  application:
-    name: coupon-calculation-service
+# 移入bootstrap.yml
+#  application:
+#    name: coupon-calculation-service
   # Spring-Cloud配置
   cloud:
     nacos:
@@ -34,6 +36,19 @@ spring:
         watch:
           enabled: true
         watch-delay: 30000
+      sentinel:
+        transport:
+          # Sentinel API端口 默认8719
+          port: 8719
+          dashboard: localhost:8080
+        datasource:
+          coupon-center-flow:
+            nacos:
+              server-addr: localhost:8848
+              namespace: coupon-center-dev
+              group-id: SENTINEL_GROUP
+              data-id: ${spring.application.name}-flow-rules
+              rule-type: flow
 
 logging:
   level:

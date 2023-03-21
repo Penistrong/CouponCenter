@@ -18,6 +18,7 @@ import org.penistrong.coupon.template.api.beans.CouponInfo;
 import org.penistrong.coupon.template.api.beans.CouponTemplateInfo;
 import org.penistrong.coupon.template.api.beans.PagedCouponInfo;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -44,6 +45,7 @@ public class CouponCustomerServiceImpl implements CouponCustomerService {
     private WebClient.Builder webClientBuilder;
 
     // 注入OpenFeign托管的远程服务调用接口
+    @Qualifier("org.penistrong.coupon.customer.feign.TemplateService")
     @Autowired
     private TemplateService templateService;
 
