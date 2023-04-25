@@ -74,8 +74,107 @@ spring:
             group-id: SENTINEL_GROUP
             data-id: ${spring.application.name}-flow-rules
             rule-type: flow
+    stream:
+      # 如果项目中只对接里一个中间件，就不需要定义binders
+      # 当需要使用到多个消息中间件时，使用binders定义(直接在spring.rabbitmq节点下配置连接串)
+      binders:
+        middleware-rabbitmq:
+          type: rabbit
+          environment:
+            spring:
+              rabbitmq:
+                host: localhost
+                port: 5672
+                username: guest
+                password: guest
+      bindings:
+        # SpringCloudStream 3.X之后约定了命名关系(当前使用版本是4.0.1):
+        # Input信道(Consumer) : <functionName>-in-<index>
+        # Output信道(Consumer) : <functionName>-out-<index>
+        # <functionName> 对应 代码中创建的Consumer<T> <functionName>方法
+        # 领券消息-生产者
+        addCoupon-out-0:
+          destination: request-coupon-topic
+          content-type: application/json
+          # 将该Stream信道绑定到binder中的消息队列中间件上
+          binder: middleware-rabbitmq
+        # 领券消息-消费者
+        addCoupon-in-0:
+          destination: request-coupon-topic
+          content-type: application/json
+          # 指定消费组，同组内一个消息只能被消费一次(消息分组单播，不指定group时就是广播消息)
+          group: add-coupon-group
+          binder: middleware-rabbitmq
+          # 设定消费者本地重试，注意业务逻辑的幂等性，若不满足一定不能重试
+          consumer:
+            # 若设定max-attempts=1,表示只消费1次,出错也不重试
+            # 默认设定为3, 即第一次消费失败后最多再重试2次S
+            max-attempts: 5
+            # 两次重试之间的初始间隔
+            back-off-initial-interval: 2000
+            # 两次重试之间的最大间隔
+            back-off-max-interval: 10000
+            # 每次间隔时间乘以的系数(类似于TCP的超时重试机制)
+            back-off-multiplier: 2
+            # 当某些异常被抛出后，配置可以重试或者不重试
+            retryable-exceptions:
+              # 对于非法参数异常，不进行重试，直接抛出到上层处理
+              java.lang.IllegalArgumentException: false
+        # 延迟领券消息-生产者
+        addCouponDelay-out-0:
+          # 延迟消息单独使用一个交换机
+          destination: request-coupon-delayed-topic
+          content-type: application/json
+          binder: middleware-rabbitmq
+        # 延迟领券消息-消费者
+        addCouponDelay-in-0:
+          destination: request-coupon-delayed-topic
+          content-type: application/json
+          group: add-coupon-group
+          binder: middleware-rabbitmq
+          consumer:
+            # 设定最大尝试次数为1，出错也不重试
+            max-attempts: 1
+        # 删除券消息-生产者
+        deleteCoupon-out-0:
+          destination: delete-coupon-topic
+          content-type: text/plain
+          binder: middleware-rabbitmq
+        # 删除券信息-消费者
+        deleteCoupon-in-0:
+          destination: delete-coupon-topic
+          content-type: text/plain
+          group: delete-coupon-group
+          binder: middleware-rabbitmq
+      function:
+        # 指明functionName 进行组装和绑定(有多组消费者的情况下使用)
+        definition: addCoupon;addCouponDelay;deleteCoupon
+      rabbit:
+        bindings:
+          # 声明以下两个信道使用的是具备延迟功能的交换机(利用rabbitmq-delayed-exchange-plugin实现)
+          # 延迟交换机的类型是x-delayed-message,且带有DM功能标签
+          addCouponDelay-out-0:
+            producer:
+              delayed-exchange: true
+          addCouponDelay-in-0:
+            consumer:
+              delayed-exchange: true
+          # 删除券信息的消费者信道开启死信队列功能，当删除一个不存在的优惠券消费者就会抛出异常，将该消息压入死信队列中
+          deleteCoupon-in-0:
+            consumer:
+              auto-bind-dlq: true
+  zipkin:
+    sender:
+      type: rabbit
+    rabbitmq:
+      addresses: 127.0.0.1:5672
+      queue: zipkin
 
 logging:
+  # With Micrometer Tracing and Boot 3.0 need to set Logging Pattern
+  # Instead of TraceEnvironmentPostProcessor
+  pattern:
+    level: "%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]"
   level:
     com.broadview.coupon: debug
     # 配置OpenFeign日志信息打印
@@ -93,3 +192,17 @@ feign:
       coupon-template-service:
         connectTimeout: 1000
         readTimeout: 2000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+  # 链路追踪配置
+  tracing:
+    sampling:
+      probability: 1.0  # 采样率100%
+  # 集成第三方链路追踪系统Zipkin
+  zipkin:
+    tracing:
+      endpoint: http://127.0.0.1:9411/api/v2/spans

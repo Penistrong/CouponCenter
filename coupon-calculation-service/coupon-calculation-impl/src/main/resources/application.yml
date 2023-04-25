@@ -49,8 +49,18 @@ spring:
               group-id: SENTINEL_GROUP
               data-id: ${spring.application.name}-flow-rules
               rule-type: flow
+  zipkin:
+    sender:
+      type: rabbit
+    rabbitmq:
+      addresses: 127.0.0.1:5672
+      queue: zipkin
 
 logging:
+  # With Micrometer Tracing and Boot 3.0 need to set Logging Pattern
+  # Instead of TraceEnvironmentPostProcessor
+  pattern:
+    level: "%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]"
   level:
     com.broadview.coupon: debug
 
@@ -60,3 +70,11 @@ management:
     web:
       exposure:
         include: "*"
+  # 链路追踪配置
+  tracing:
+    sampling:
+      probability: 1.0  # 采样率100%
+  # 集成第三方链路追踪系统Zipkin
+  zipkin:
+    tracing:
+      endpoint: http://127.0.0.1:9411/api/v2/spans
