@@ -8,13 +8,13 @@ import org.springframework.context.annotation.Primary;
 import reactor.core.publisher.Mono;
 
 @Configuration
-public class RedisLimitationConfig {
+public class RedisLimiterConfig {
 
     // 限流维度: 以Remote Host Address作为限流规则统计的维度
     // 来自同一个Remote Host的请求会被限流规则统计为一组
     @Bean
     @Primary
-    public KeyResolver remoteHostLimitationKey() {
+    public KeyResolver remoteHostLimiterKey() {
         return exchange -> Mono.just(
                 exchange.getRequest()
                         .getRemoteAddress()
@@ -35,8 +35,9 @@ public class RedisLimitationConfig {
         return new RedisRateLimiter(20, 40);
     }
 
-    // 默认限流器
+    // 默认限流器，加上@Primary注解使消费者能接收多个bean,或者使用@Qualifier区分该消费哪个bean
     @Bean("defaultRateLimiter")
+    @Primary
     public RedisRateLimiter defaultRateLimiter() {
         return new RedisRateLimiter(50, 100);
     }

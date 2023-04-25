@@ -24,6 +24,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.web.reactive.function.client.WebClient;
 
@@ -54,6 +55,10 @@ public class CouponCustomerServiceImpl implements CouponCustomerService {
 
     @Override
     public Coupon requestCoupon(RequestCoupon request) {
+        // 使用OpenFeign远程调用templateService服务
+        // CouponTemplateInfo templateInfo = templateService.getTemplate(request.getCouponTemplateId());
+
+        // 这里不使用OpenFeign调用，因为要在请求头部添加相关字段，使LoadBalancer能根据打标的流量分流到不同节点上做金丝雀测试
         /* get: 指明Http Method为GET
          * uri: 指明远程调用的请求地址，Nacos会使用服务发现机制根据目标服务名称解析为可用服务节点
          * retrieve: 直接获取responseBody并准备decode

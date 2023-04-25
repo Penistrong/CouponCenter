@@ -54,8 +54,8 @@ public class CouponTemplateController {
         log.info("Get Templates In Batch: {}", JSON.toJSONString(ids));
         // 测试Sentinel熔断规则: 采取 异常比例 作为熔断策略
         // 在10s的滑动统计窗口内，如果发生异常的请求比例超过60%(0.6)，且最小总请求数为5，则开启5s的熔断策略
-        if (ids.size() == 2)
-            throw new RuntimeException("批量查询券模板，模板id个数等于2时抛出运行时异常，测试Sentinel熔断策略");
+        if (ids.size() == 4)
+            throw new RuntimeException("批量查询券模板，模板id个数等于4时抛出运行时异常，测试Sentinel熔断策略");
         return couponTemplateService.getTemplateInfoMap(ids);
     }
 

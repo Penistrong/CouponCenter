@@ -1,7 +1,7 @@
 package org.penistrong.coupon.customer.controller;
 
 import com.alibaba.csp.sentinel.annotation.SentinelResource;
-import com.alibaba.nacos.api.config.annotation.NacosValue;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.penistrong.coupon.calculation.api.beans.ShoppingCart;
 import org.penistrong.coupon.calculation.api.beans.SimulationOrder;
@@ -9,6 +9,7 @@ import org.penistrong.coupon.calculation.api.beans.SimulationResponse;
 import org.penistrong.coupon.customer.api.beans.CouponSearchParams;
 import org.penistrong.coupon.customer.api.beans.RequestCoupon;
 import org.penistrong.coupon.customer.dao.entity.Coupon;
+import org.penistrong.coupon.customer.event.CouponProducer;
 import org.penistrong.coupon.customer.service.intf.CouponCustomerService;
 import org.penistrong.coupon.template.api.beans.PagedCouponInfo;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,7 +17,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.context.config.annotation.RefreshScope;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
 
 @Slf4j
 // 添加RefreshScope注解，将来自Nacos Config的属性变动动态同步到Controller中
@@ -26,14 +26,34 @@ import javax.validation.Valid;
 @RequestMapping("/coupon-customer")
 public class CouponCustomerController {
 
-    @Autowired
-    private CouponCustomerService customerService;
-
     // 将Nacos配置中心提供的coupon-customer-service.yml中的属性注入
     // 实现动态配置推送和业务开关，注意默认值为false(即使Nacos Config连接异常),配合@RefreshScope使用
     // 官网不推荐用@NacosValue(value = "${disableCouponRequest:false}", autoRefreshed = true)
     @Value("${disableCouponRequest:false}")
     private Boolean disableCoupon;
+
+    @Autowired
+    private CouponCustomerService customerService;
+
+    @Autowired
+    private CouponProducer couponProducer;
+
+    // 消息队列发布生产消息
+    @PostMapping("requestCouponEvent")
+    public void requestCouponEvent (@Valid @RequestBody RequestCoupon coupon) {
+        couponProducer.produceRequestCouponEvent(coupon);
+    }
+
+    @PostMapping("requestCouponDelayEvent")
+    public void requestCouponDelayedEvent (@Valid @RequestBody RequestCoupon coupon) {
+        couponProducer.produceRequestCouponDelayEvent(coupon);
+    }
+
+    @DeleteMapping("deleteCouponEvent")
+    public void deleteCouponEvent (@RequestParam("userId") Long userId,
+                                   @RequestParam("couponId") Long couponId) {
+        couponProducer.produceDeleteCouponEvent(userId, couponId);
+    }
 
     // 领取优惠券
     @PostMapping("/requestCoupon")

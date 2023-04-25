@@ -1,3 +1,21 @@
 spring:
   application:
     name: coupon-center-gateway
+  cloud:
+    nacos:
+      config:
+        server-addr: localhost:8848
+        file-extension: yml
+        namespace: coupon-center-dev
+        group: main
+        # 如果是自定义监听器拉取配置文件的话，不能将名称写在nacos.config.name里，否则file-extension不同
+        # name: gateway-routes-config.json
+        timeout: 5000
+        config-long-poll-timeout: 1000
+        config-retry-time: 100000
+        max-retry: 3
+        refresh-enabled: true
+        # 开启远程配置同步
+        enable-remote-sync-config: true
+
+dynamic-routes-config-name: gateway-routes-config.json

@@ -29,7 +29,7 @@ public class CanaryRule implements ReactorServiceInstanceLoadBalancer {
     private ObjectProvider<ServiceInstanceListSupplier> serviceInstanceListSupplierProvider;
     private String serviceId;
 
-    // 使用原子整型作为轮询策略的种子
+    // 使用原子整型类作为轮询策略的种子
     final AtomicInteger position;
 
     public CanaryRule(ObjectProvider<ServiceInstanceListSupplier> serviceInstanceListSupplierProvider,
@@ -83,7 +83,7 @@ public class CanaryRule implements ReactorServiceInstanceLoadBalancer {
 
         // 如果Header里没有打标，则使用RoundRobin规则轮询服务实例
         if (StringUtils.isBlank(trafficVersion)) {
-            // 过滤掉所有参与金丝雀测试的节点，即Nacos MetaData中包含标记的节点
+            // 过滤掉所有参与金丝雀测试的节点，即Nacos MetaData中包含标记的节点(该标记在Nacos对服务的某个实例自己添加或者在.yml中配置)
             // 再从剩余不参与金丝雀测试的节点中执行RoundRobin
             List<ServiceInstance> noneCanaryInstances = instances.stream()
                     .filter(e -> !e.getMetadata().containsKey(TRAFFIC_VERSION))
@@ -91,7 +91,7 @@ public class CanaryRule implements ReactorServiceInstanceLoadBalancer {
             return getRoundRobinInstance(noneCanaryInstances);
         }
 
-        // 对于打标的，从金丝雀服务器里仍然使用RoundRobin挑出一台
+        // 对于打标且标记字段符合实际定义值的金丝雀服务器，仍然使用RoundRobin挑出其中的一个实例作为负载均衡发送请求的目标服务器实例
         List<ServiceInstance> canaryInstances = instances.stream()
                 .filter(e -> {
                     String trafficVersionInMetaData = e.getMetadata().get(TRAFFIC_VERSION);

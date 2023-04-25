@@ -18,11 +18,27 @@
             <artifactId>spring-cloud-starter-gateway</artifactId>
         </dependency>
 
+        <!-- jakarta使用的validation实现，注意随着Spring 3.X的发布，jakarta.validation-api.jar里的原包名从
+             javax.validation变成jakarta.validation，不改成3.x版本的话会导致Gateway里引用的jakarta.validation包下的类全部无法加载
+             导致解析clazz时@Valid等验证注解无法使用 -->
+        <dependency>
+            <groupId>jakarta.validation</groupId>
+            <artifactId>jakarta.validation-api</artifactId>
+            <version>3.0.2</version>
+        </dependency>
+
         <!-- Nacos服务发现 -->
         <dependency>
             <groupId>com.alibaba.cloud</groupId>
             <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
         </dependency>
+
+        <!-- Nacos配置中心 -->
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>
+        </dependency>
+
         <!-- LoadBalancer -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>
