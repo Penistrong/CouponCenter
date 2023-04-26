@@ -22,4 +22,9 @@ public class TemplateServiceFallback implements TemplateService {
         log.info("Test OpenFeign Fallback::getBatchTemplate");
         return null;
     }
+
+    @Override
+    public void deleteTemplate(Long id) {
+        log.info("Test OpenFeign Fallback:deleteTemplate");
+    }
 }

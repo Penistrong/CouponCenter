@@ -24,6 +24,9 @@ public interface CouponCustomerService {
     // 删除优惠券(设为失效)
     void deleteCoupon(Long userId, Long couponId);
 
+    // 删除优惠券模板及所有由该模板派生的优惠券(全部置为失效状态)
+    void deleteCouponTemplate(Long templateId);
+
     // 拉取用户拥有的优惠券列表
     PagedCouponInfo searchCoupons(CouponSearchParams request);
 }

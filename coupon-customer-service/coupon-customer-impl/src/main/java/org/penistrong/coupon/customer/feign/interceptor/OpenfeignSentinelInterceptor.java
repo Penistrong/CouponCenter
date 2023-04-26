@@ -1,4 +1,4 @@
-package org.penistrong.coupon.customer.feign;
+package org.penistrong.coupon.customer.feign.interceptor;
 
 import feign.RequestInterceptor;
 import feign.RequestTemplate;

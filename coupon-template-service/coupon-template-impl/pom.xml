@@ -49,6 +49,12 @@
             <artifactId>spring-cloud-starter-alibaba-sentinel</artifactId>
         </dependency>
 
+        <!-- 分布式事务框架Seata支持 -->
+        <dependency>
+            <groupId>com.alibaba.cloud</groupId>
+            <artifactId>spring-cloud-starter-alibaba-seata</artifactId>
+        </dependency>
+
         <!-- Micrometer Tracing 链路追踪 Spring Cloud 3.0之后移除了Sleuth和Zipkin-->
         <dependency>
             <groupId>io.micrometer</groupId>
@@ -72,10 +78,10 @@
         </dependency>
 
         <!-- Sleuth自带的Instrumentation被拆分了，项目里用OpenFeign调用就用feign-micrometer -->
-        <dependency>
+        <!--<dependency>
             <groupId>io.github.openfeign</groupId>
             <artifactId>feign-micrometer</artifactId>
-        </dependency>
+        </dependency>-->
 
         <dependency>
             <groupId>org.springframework.cloud</groupId>

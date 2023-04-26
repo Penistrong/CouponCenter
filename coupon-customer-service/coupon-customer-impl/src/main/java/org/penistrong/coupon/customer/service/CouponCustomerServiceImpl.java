@@ -55,16 +55,15 @@ public class CouponCustomerServiceImpl implements CouponCustomerService {
 
     @Override
     public Coupon requestCoupon(RequestCoupon request) {
-        // 使用OpenFeign远程调用templateService服务
-        // CouponTemplateInfo templateInfo = templateService.getTemplate(request.getCouponTemplateId());
-
-        // 这里不使用OpenFeign调用，因为要在请求头部添加相关字段，使LoadBalancer能根据打标的流量分流到不同节点上做金丝雀测试
+        log.info("Request new coupon, body={}", request);
+        // 这里使用WebClient调用，在请求头部添加相关字段，使LoadBalancer能根据打标的流量分流到不同节点上做金丝雀测试
         /* get: 指明Http Method为GET
          * uri: 指明远程调用的请求地址，Nacos会使用服务发现机制根据目标服务名称解析为可用服务节点
          * retrieve: 直接获取responseBody并准备decode
          * bodyToMono: 将responseBody解析并转换为具体的Java对象
          * block: 将类型为T的对象从Mono<T>中取出
          */
+        /*
         CouponTemplateInfo templateInfo = webClientBuilder.build()
                 .get()
                 .uri("http://coupon-template-service/template/getTemplate?id="+request.getCouponTemplateId())
@@ -72,7 +71,10 @@ public class CouponCustomerServiceImpl implements CouponCustomerService {
                 .header(TRAFFIC_VERSION, request.getTrafficVersion())
                 .retrieve()
                 .bodyToMono(CouponTemplateInfo.class)
-                .block();
+                .block();*/
+
+        // 改造为OpenFeign调用，利用拦截器在请求头部添加相关字段，以满足金丝雀测试要求
+        CouponTemplateInfo templateInfo = templateService.getTemplate(request.getCouponTemplateId());
 
         // 若不存在模板则抛出异常
         if (templateInfo == null){
@@ -228,6 +230,16 @@ public class CouponCustomerServiceImpl implements CouponCustomerService {
 
         coupon.setStatus(CouponStatus.INACTIVE);
         couponDao.save(coupon);
+    }
+
+    // 本地事务+分布式事务
+    @Override
+    @Transactional
+    public void deleteCouponTemplate(Long templateId) {
+        templateService.deleteTemplate(templateId);
+        couponDao.deleteCouponInBatch(templateId, CouponStatus.INACTIVE);
+
+        throw new RuntimeException("模拟AT分布式事务抛出异常，致使全部回滚");
     }
 
     /**

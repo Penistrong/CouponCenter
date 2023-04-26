@@ -99,3 +99,18 @@ management:
   zipkin:
     tracing:
       endpoint: http://127.0.0.1:9411/api/v2/spans
+
+seata:
+  tx-service-group: seata-server-group
+  application-id: coupon-customer-service
+  registry:
+    type: nacos
+    nacos:
+      application: seata-server
+      server-addr: localhost:8848
+      namespace: coupon-center-dev
+      group: main
+      cluster: Cluster-Coupon
+  service:
+    vgroup-mapping:
+      seata-server-group: default

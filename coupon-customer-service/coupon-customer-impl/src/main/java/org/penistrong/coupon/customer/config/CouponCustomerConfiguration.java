@@ -1,4 +1,4 @@
-package org.penistrong.coupon.customer;
+package org.penistrong.coupon.customer.config;
 
 import feign.Logger;
 import org.springframework.cloud.client.loadbalancer.LoadBalanced;

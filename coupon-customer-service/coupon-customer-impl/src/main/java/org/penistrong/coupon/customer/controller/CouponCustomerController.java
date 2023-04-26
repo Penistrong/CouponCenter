@@ -1,6 +1,7 @@
 package org.penistrong.coupon.customer.controller;
 
 import com.alibaba.csp.sentinel.annotation.SentinelResource;
+import io.seata.spring.annotation.GlobalTransactional;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
 import org.penistrong.coupon.calculation.api.beans.ShoppingCart;
@@ -70,6 +71,15 @@ public class CouponCustomerController {
     @DeleteMapping("/deleteCoupon")
     public void deleteCoupon(@RequestParam("userId") Long userId, @RequestParam("couponId") Long couponId) {
         customerService.deleteCoupon(userId, couponId);
+    }
+
+    // 删除优惠券模板及所有由该模板派生的优惠券(全部置为失效状态)
+    // 在当前用户服务模块的Controller::handler这里，为了让全局回滚操作生效，在递归调用中需要将产生的异常上抛至该处以被捕获
+    // 小心AOP的统一异常拦截器
+    @DeleteMapping("/deleteCouponTemplate")
+    @GlobalTransactional(name = "coupon-customer-service", rollbackFor = Exception.class)
+    public void deleteCouponTemplate(@RequestParam("templateId") Long templateId) {
+        customerService.deleteCouponTemplate(templateId);
     }
 
     // 订单优惠券价格试算

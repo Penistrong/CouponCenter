@@ -29,6 +29,11 @@ public class TemplateServiceFallbackFactory implements FallbackFactory {
                 log.info("Test Fallback Factory with Throwable cause");
                 return null;
             }
+
+            @Override
+            public void deleteTemplate(Long id) {
+                log.info("Test Fallback Factory with Throwable cause");
+            }
         };
     }
 }
